@@ -28,7 +28,7 @@ function UserMenu() {
   if (!user) return null;
 
   return (
-    <Stack direction="row" spacing={2} alignItems="center">
+    <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
       <Box sx={{ textAlign: "right", lineHeight: 1.2 }}>
         <Typography variant="body2" fontWeight={600} color="text.primary">
           {user.name}
