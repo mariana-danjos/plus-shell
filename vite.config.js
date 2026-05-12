@@ -14,7 +14,15 @@ export default defineConfig({
         // O Shell consome o remoteEntry exposto pelo plus-mfe-auth
         mfe_auth: MFE_AUTH_URL,
       },
-      shared: ["react", "react-dom"],
+      shared: [
+        "react",
+        "react-dom",
+        "react-router-dom",
+        "@mui/material",
+        "@mui/icons-material",
+        "@emotion/react",
+        "@emotion/styled",
+      ],
     }),
   ],
   build: {
