@@ -6,7 +6,8 @@ import {
 import LogoutIcon from "@mui/icons-material/Logout";
 import { useAuth } from "mfe_auth/AuthContext";
 
-const LoginPage = lazy(() => import("mfe_auth/LoginPage"));
+const LoginPage  = lazy(() => import("mfe_auth/LoginPage"));
+const SignupPage = lazy(() => import("mfe_auth/SignupPage"));
 
 function FullPageLoader() {
   return (
@@ -89,6 +90,10 @@ export default function App() {
           <Route
             path="/login"
             element={<LoginPage onLogin={() => (window.location.href = "/")} />}
+          />
+          <Route
+            path="/signup"
+            element={<SignupPage />}
           />
           <Route
             path="/"
