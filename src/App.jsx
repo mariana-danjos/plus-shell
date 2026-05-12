@@ -27,15 +27,23 @@ function UserMenu() {
   const { user, logout } = useAuth();
   if (!user) return null;
 
+  const role = user.roles?.[0];
+  const roleLabel = role ? role.charAt(0).toUpperCase() + role.slice(1) : null;
+
   return (
     <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-      <Box sx={{ textAlign: "right", lineHeight: 1.2 }}>
-        <Typography variant="body2" fontWeight={600} color="text.primary">
+      <Box sx={{ textAlign: "right", lineHeight: 1.2, display: "flex", flexDirection: "column" }}>
+        <Typography component="span" variant="body2" fontWeight={600} color="text.primary">
           {user.name}
         </Typography>
-        <Typography variant="caption" color="text.secondary">
+        <Typography component="span" variant="caption" color="text.secondary">
           {user.email}
         </Typography>
+        {roleLabel && (
+          <Typography component="span" variant="caption" color="primary" fontWeight={600}>
+            {roleLabel}
+          </Typography>
+        )}
       </Box>
       <Button
         size="small"
