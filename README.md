@@ -4,7 +4,7 @@
 
 Shell App do projeto **Plus** — microfrontend **host**.
 
-Orquestra os microfrontends remotos via **Module Federation**. Consome o `plus-mfe-auth` para autenticação (páginas de login/cadastro, contexto e tema) e expõe uma rota privada (`/`) com o painel principal. Construído com React 18 + Vite 5.
+Orquestra os microfrontends remotos via **Module Federation**. Consome o `plus-mfe-auth` para autenticação (páginas de login/cadastro, contexto e tema) e expõe uma rota privada (`/`) com o painel principal. Construído com React 18 + Vite 5 + TypeScript 5.
 
 ---
 
@@ -34,7 +34,8 @@ Orquestra os microfrontends remotos via **Module Federation**. Consome o `plus-m
 | `@originjs/vite-plugin-federation` | 1.3 | Module Federation (host) |
 | `@mui/material` + `@mui/icons-material` | 9 | Componentes Material UI |
 | `@emotion/react` + `@emotion/styled` | 11 | CSS-in-JS (engine do MUI) |
-| ESLint 9 + plugins React | — | Lint (flat config) |
+| TypeScript | 5 | Tipagem estática |
+| ESLint 9 + `typescript-eslint` + plugins React | — | Lint (flat config) |
 
 > O shell não tem dependências de estado global (Redux, Zustand). O contexto de autenticação vem do remote `mfe_auth`.
 
@@ -63,7 +64,8 @@ Acesse: **http://localhost:3000**
 | `npm run dev` | Dev server Vite na porta 3000 com HMR |
 | `npm run build` | Build de produção em `dist/` |
 | `npm run preview` | Serve `dist/` na porta 3000 |
-| `npm run lint` | ESLint sobre `src/**/*.{js,jsx}` |
+| `npm run lint` | ESLint sobre `src/**/*.{ts,tsx}` |
+| `npm run typecheck` | `tsc --noEmit` (checagem de tipos sem emitir arquivos) |
 
 > Não há suite de testes neste repo (o shell delega toda a lógica autenticada ao remote `mfe_auth`).
 
@@ -73,7 +75,7 @@ Acesse: **http://localhost:3000**
 
 | Variável | Padrão | Quando se aplica |
 |---|---|---|
-| `MFE_AUTH_URL` | `http://localhost:4001/assets/remoteEntry.js` | **Build time** — definida via `process.env.MFE_AUTH_URL` no `vite.config.js`. Sobrescreve o entry point do remote em outros ambientes (staging, prod). |
+| `MFE_AUTH_URL` | `http://localhost:4001/assets/remoteEntry.js` | **Build time** — definida via `process.env.MFE_AUTH_URL` no `vite.config.ts`. Sobrescreve o entry point do remote em outros ambientes (staging, prod). |
 
 Exemplo:
 
@@ -89,7 +91,7 @@ MFE_AUTH_URL=https://auth.exemplo.com/assets/remoteEntry.js npm run build
 |---|---|---|---|
 | `/login` | `LoginPage` | `mfe_auth/LoginPage` (lazy) | pública |
 | `/signup` | `SignupPage` | `mfe_auth/SignupPage` (lazy) | pública |
-| `/` | `Dashboard` | local (`src/App.jsx`) | privada (`PrivateRoute`) |
+| `/` | `Dashboard` | local (`src/App.tsx`) | privada (`PrivateRoute`) |
 
 **`PrivateRoute`:**
 
@@ -106,9 +108,9 @@ MFE_AUTH_URL=https://auth.exemplo.com/assets/remoteEntry.js npm run build
 
 ## Module Federation
 
-O `vite.config.js` registra `mfe_auth` como remote:
+O `vite.config.ts` registra `mfe_auth` como remote:
 
-```js
+```ts
 import federation from "@originjs/vite-plugin-federation";
 
 const MFE_AUTH_URL =
@@ -141,16 +143,18 @@ export default defineConfig({
 
 O shell consome `mfe_auth` em cinco pontos:
 
-```js
-// src/main.jsx
+```ts
+// src/main.tsx
 import { theme } from "mfe_auth/theme";
 import { AuthProvider } from "mfe_auth/AuthContext";
 
-// src/App.jsx
+// src/App.tsx
 import { useAuth } from "mfe_auth/AuthContext";
 const LoginPage  = lazy(() => import("mfe_auth/LoginPage"));
 const SignupPage = lazy(() => import("mfe_auth/SignupPage"));
 ```
+
+> Os tipos dos módulos remotos ficam em `src/types/mfe-auth.d.ts`.
 
 `LoginPage` e `SignupPage` são carregados sob demanda via `lazy()` + `<Suspense fallback={<FullPageLoader />}>`. Isso mantém o bundle inicial enxuto.
 
@@ -162,18 +166,22 @@ const SignupPage = lazy(() => import("mfe_auth/SignupPage"));
 plus-shell/
 ├── .github/workflows/ci.yml      # Pipeline CI/CD
 ├── index.html                    # Template (preconnect Google Fonts, Inter)
-├── vite.config.js                # Vite + Module Federation
+├── vite.config.ts                # Vite + Module Federation
+├── tsconfig.json                 # Configuração TypeScript
 ├── eslint.config.mjs             # ESLint flat config
-├── Dockerfile                    # Container (serve dist/ via vite preview)
+├── Dockerfile                    # Container (multi-stage: build + vite preview)
 ├── package.json
 └── src/
-    ├── main.jsx                  # Bootstrap: ThemeProvider + CssBaseline + AuthProvider + App
-    └── App.jsx                   # Router + rotas + Dashboard + UserMenu + PrivateRoute
+    ├── main.tsx                  # Bootstrap: ThemeProvider + CssBaseline + AuthProvider + App
+    ├── App.tsx                   # Router + rotas + Dashboard + UserMenu + PrivateRoute
+    ├── vite-env.d.ts             # Tipos do client Vite
+    └── types/
+        └── mfe-auth.d.ts         # Declarações dos módulos remotos do mfe_auth
 ```
 
-`main.jsx` aplica os providers na ordem:
+`main.tsx` aplica os providers na ordem:
 
-```jsx
+```tsx
 <React.StrictMode>
   <ThemeProvider theme={theme}>
     <CssBaseline />
@@ -184,7 +192,7 @@ plus-shell/
 </React.StrictMode>
 ```
 
-`App.jsx` envolve as rotas em `<BrowserRouter>` + `<Suspense>` e implementa `PrivateRoute` + `Dashboard` localmente.
+`App.tsx` envolve as rotas em `<BrowserRouter>` + `<Suspense>` e implementa `PrivateRoute` + `Dashboard` localmente.
 
 ---
 
@@ -195,6 +203,7 @@ ESLint 9.x com **flat config** (`eslint.config.mjs`).
 Presets:
 
 - `@eslint/js:recommended`
+- `typescript-eslint:recommended`
 - `eslint-plugin-react/recommended`
 - `eslint-plugin-react-hooks/recommended`
 
@@ -202,7 +211,7 @@ Regras customizadas:
 
 - `react/react-in-jsx-scope: off` (React 18+).
 - `react/prop-types: off` (não usamos PropTypes).
-- `no-unused-vars`: error, ignora identificadores prefixados com `_`.
+- `no-unused-vars: off` em favor de `@typescript-eslint/no-unused-vars: error`, que ignora identificadores prefixados com `_`.
 
 Ignorados: `dist/`, `coverage/`, `node_modules/`.
 
@@ -227,9 +236,9 @@ lint → build → docker
 |---|---|---|
 | `lint` | `npm ci` → `npm run lint -- --max-warnings 0` | 10 min |
 | `build` | `npm ci` → `npm run build` → artifact `shell-dist` (1 d) | 10 min |
-| `docker` | Baixa `shell-dist` para `dist/`, roda `docker/build-push-action@v7` com `push: false, load: true` | 10 min |
+| `docker` | Baixa `shell-dist` para `dist/`, roda `docker/build-push-action@v7` com `push: false, load: true` e cache `type=gha` | 10 min |
 
-O job `docker` consome o artifact do `build` porque o `Dockerfile` espera o `dist/` já buildado.
+O job `docker` baixa o artifact do `build` antes de invocar o `Dockerfile` (multi-stage, que também roda `npm run build` internamente).
 
 Configurações:
 
@@ -256,13 +265,22 @@ act pull_request
 
 ## Docker
 
-O `Dockerfile` espera o `dist/` já buildado:
+O `Dockerfile` é **multi-stage**: o primeiro estágio instala dependências e roda `npm run build`; o segundo serve o `dist/` via `vite preview`.
 
 ```dockerfile
+FROM node:20-alpine AS build
+WORKDIR /app
+COPY package.json package-lock.json* ./
+RUN npm install --no-audit --no-fund
+COPY . .
+ARG MFE_AUTH_URL=http://localhost:4001/assets/remoteEntry.js
+ENV MFE_AUTH_URL=$MFE_AUTH_URL
+RUN npm run build
+
 FROM node:20-alpine
 WORKDIR /app
 RUN npm install -g vite
-COPY dist ./dist
+COPY --from=build /app/dist ./dist
 EXPOSE 3000
 CMD ["vite", "preview", "--port", "3000", "--host"]
 ```
@@ -270,10 +288,11 @@ CMD ["vite", "preview", "--port", "3000", "--host"]
 Build local:
 
 ```bash
-npm run build
 docker build -t plus-shell:dev .
 docker run -p 3000:3000 plus-shell:dev
 ```
+
+> O `MFE_AUTH_URL` pode ser passado em build com `--build-arg MFE_AUTH_URL=...`.
 
 ---
 
