@@ -11,7 +11,6 @@ export default defineConfig({
     federation({
       name: "shell",
       remotes: {
-        // O Shell consome o remoteEntry exposto pelo plus-mfe-auth
         mfe_auth: MFE_AUTH_URL,
       },
       shared: [
