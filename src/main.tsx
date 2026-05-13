@@ -5,7 +5,10 @@ import { theme } from "mfe_auth/theme";
 import { AuthProvider } from "mfe_auth/AuthContext";
 import App from "./App";
 
-ReactDOM.createRoot(document.getElementById("root")).render(
+const rootEl = document.getElementById("root");
+if (!rootEl) throw new Error("Root element #root not found");
+
+ReactDOM.createRoot(rootEl).render(
   <React.StrictMode>
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -13,5 +16,5 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <App />
       </AuthProvider>
     </ThemeProvider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );

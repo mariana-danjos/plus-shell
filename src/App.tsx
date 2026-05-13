@@ -1,4 +1,4 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, type ReactNode } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import {
   AppBar, Toolbar, Box, Typography, Button, Stack, CircularProgress, Container,
@@ -17,10 +17,10 @@ function FullPageLoader() {
   );
 }
 
-function PrivateRoute({ children }) {
+function PrivateRoute({ children }: { children: ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
   if (loading) return <FullPageLoader />;
-  return isAuthenticated ? children : <Navigate to="/login" replace />;
+  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
 }
 
 function UserMenu() {
@@ -33,14 +33,14 @@ function UserMenu() {
   return (
     <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
       <Box sx={{ textAlign: "right", lineHeight: 1.2, display: "flex", flexDirection: "column" }}>
-        <Typography component="span" variant="body2" fontWeight={600} color="text.primary">
+        <Typography component="span" variant="body2" sx={{ fontWeight: 600 }} color="text.primary">
           {user.name}
         </Typography>
         <Typography component="span" variant="caption" color="text.secondary">
           {user.email}
         </Typography>
         {roleLabel && (
-          <Typography component="span" variant="caption" color="primary" fontWeight={600}>
+          <Typography component="span" variant="caption" color="primary" sx={{ fontWeight: 600 }}>
             {roleLabel}
           </Typography>
         )}
@@ -71,7 +71,7 @@ function Dashboard() {
         }}
       >
         <Toolbar>
-          <Typography variant="h6" color="primary" fontWeight={700} sx={{ flexGrow: 1 }}>
+          <Typography variant="h6" color="primary" sx={{ flexGrow: 1, fontWeight: 700 }}>
             Plus
           </Typography>
           <UserMenu />
@@ -79,7 +79,7 @@ function Dashboard() {
       </AppBar>
 
       <Container component="main" sx={{ py: 4 }}>
-        <Typography variant="h4" fontWeight={700} gutterBottom>
+        <Typography variant="h4" sx={{ fontWeight: 700 }} gutterBottom>
           Dashboard
         </Typography>
         <Typography variant="body1" color="text.secondary">
@@ -95,14 +95,8 @@ export default function App() {
     <BrowserRouter>
       <Suspense fallback={<FullPageLoader />}>
         <Routes>
-          <Route
-            path="/login"
-            element={<LoginPage onLogin={() => (window.location.href = "/")} />}
-          />
-          <Route
-            path="/signup"
-            element={<SignupPage />}
-          />
+          <Route path="/login"  element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
           <Route
             path="/"
             element={
